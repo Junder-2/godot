@@ -795,7 +795,7 @@ layout(location = 2) out vec2 motion_vector;
 #if !defined(MODE_RENDER_DEPTH) && !defined(MODE_UNSHADED)
 
 // Default to SPECULAR_SCHLICK_GGX.
-#if !defined(SPECULAR_DISABLED) && !defined(SPECULAR_SCHLICK_GGX) && !defined(SPECULAR_TOON)
+#if !defined(SPECULAR_DISABLED) && !defined(SPECULAR_SCHLICK_GGX) && !defined(SPECULAR_TOON) && !defined(SPECULAR_BLINN_PHONG)
 #define SPECULAR_SCHLICK_GGX
 #endif
 
@@ -1726,6 +1726,10 @@ void fragment_shader(in SceneData scene_data) {
 #if defined(DIFFUSE_TOON)
 		//simplify for toon, as
 		specular_light *= specular * metallic * albedo * 2.0;
+
+#elif defined(SPECULAR_BLINN_PHONG)
+		float smoothness = 1.0 - pow(roughness, 2.5);
+		specular_light *= f0 * specular * smoothness;
 #else
 
 		// scales the specular reflections, needs to be computed before lighting happens,

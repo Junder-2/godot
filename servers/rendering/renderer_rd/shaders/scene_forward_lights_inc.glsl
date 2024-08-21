@@ -98,7 +98,7 @@ void light_compute(vec3 N, vec3 L, vec3 V, float A, vec3 light_color, bool is_di
 	float NdotV = dot(N, V);
 	float cNdotV = max(NdotV, 1e-4);
 
-#if defined(DIFFUSE_BURLEY) || defined(SPECULAR_SCHLICK_GGX) || defined(LIGHT_CLEARCOAT_USED)
+#if defined(DIFFUSE_BURLEY) || defined(SPECULAR_SCHLICK_GGX) || defined(LIGHT_CLEARCOAT_USED) || defined(SPECULAR_BLINN_PHONG)
 	vec3 H = normalize(V + L);
 #endif
 
@@ -184,7 +184,7 @@ void light_compute(vec3 N, vec3 L, vec3 V, float A, vec3 light_color, bool is_di
 #endif //LIGHT_TRANSMITTANCE_USED
 	}
 
-	if (roughness > 0.0) { // FIXME: roughness == 0 should not disable specular light entirely
+	if (roughness >= 0.0) { // FIXME: roughness == 0 should not disable specular light entirely
 
 		// D
 
@@ -199,6 +199,32 @@ void light_compute(vec3 N, vec3 L, vec3 V, float A, vec3 light_color, bool is_di
 
 #elif defined(SPECULAR_DISABLED)
 		// none..
+
+#elif defined(SPECULAR_BLINN_PHONG)
+		float smoothness = 1.0 - pow(roughness, 2.5);
+		float shinyExp = pow(1.0 - roughness, 2.5);
+		float shinyness = mix(10.0, 220.0, shinyExp);
+
+#if defined(LIGHT_ANISOTROPY_USED)
+		// https://google.github.io/filament/Filament.html#lighting/imagebasedlights/anisotropy
+		vec3 anisoDir = (anisotropy >= 0.0 ? B : T);
+		vec3 anisoTangent = cross(anisoDir, V);
+		vec3 anisoNormal = cross(anisoTangent, anisoDir);
+		vec3 bentNormal = normalize(mix(N, anisoNormal, abs(anisotropy) * clamp(5.0 * roughness, 0.0, 1.0)));
+
+		float NdotH = max(dot(bentNormal, H), 0.0);
+
+		//float anisoDot = 1.0 - pow(abs(dot(anisoDir, H)), 2.0-(anisoAmount*0.9*invRoughnessExp));
+		//float blinnDot = max(dot(N, H), 0.0);
+		//float NdotH = clamp(mix(blinnDot, anisoDot, anisoAmount*anisoAmount*0.9), 0.0, 1.0);
+#else
+		float NdotH = max(dot(N, H), 0.0);
+#endif
+		//mix(vec3(1.0), normalize(albedo * 1.5), metallic) * specularPhong;
+		float specularPhong = pow(NdotH, shinyness) * smoothness;
+		vec3 specularColor = specularPhong * f0;
+
+		specular_light += specularColor * light_color * attenuation * specular_amount;
 
 #elif defined(SPECULAR_SCHLICK_GGX)
 		// shlick+ggx as default

@@ -627,6 +627,7 @@ void SceneShaderForwardMobile::init(const String p_defines) {
 		actions.render_mode_defines["specular_schlick_ggx"] = "#define SPECULAR_SCHLICK_GGX\n";
 
 		actions.render_mode_defines["specular_toon"] = "#define SPECULAR_TOON\n";
+		actions.render_mode_defines["specular_blinn_phong"] = "#define SPECULAR_BLINN_PHONG\n";
 		actions.render_mode_defines["specular_disabled"] = "#define SPECULAR_DISABLED\n";
 		actions.render_mode_defines["shadows_disabled"] = "#define SHADOWS_DISABLED\n";
 		actions.render_mode_defines["ambient_light_disabled"] = "#define AMBIENT_LIGHT_DISABLED\n";
